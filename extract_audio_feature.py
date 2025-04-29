@@ -1,180 +1,83 @@
 #!/usr/bin/env python3
-"""
-Render POP909 MIDI to WAV, split by chord annotations, extract fixed-size
-audio embeddings and update metadata.
-
-This version incorporates the following fixes:
-
-* graceful SoundFont check and error handling
-* index reset to avoid HDF5 out-of-range writes
-* HDF5 chunking + compression
-* safer padding rule (≥ 4 STFT frames)
-* clipping guard after resampling
-* higher-resolution STFT (n_fft = 4096, hop_length = 512)
-* removal of dead code
-* English-only comments
-"""
-
 from pathlib import Path
-from typing import Optional
-
-import numpy as np
-import pandas as pd
-import pretty_midi as pm
-import soundfile as sf
-import librosa
-import h5py
+from typing import Optional, Tuple
+import numpy as np, pandas as pd, soundfile as sf, librosa, h5py
 from tqdm import tqdm
 
-# ---------- configuration ----------
+# ---- config ----
 POP909_ROOT = Path("POP909")
-SF2_PATH = Path("TimGM6mb.sf2")        # change if needed
-METADATA_CSV = "POP909_metadata.csv"
-WAV_DIR = Path("wav_22k_mono")
-H5_OUT = "features_audio.h5"
+WAV_DIR     = Path("wav_22k_mono")
+META_CSV    = "POP909_metadata.csv"
+H5_OUT      = "features_audio.h5"
+SR, MEL_BINS, N_FFT, HOP = 22_050, 64, 4096, 512
+MIN_SAMPLES = N_FFT + HOP * 3
+# -----------------
 
-SR_ORIG = 44_100
-SR_TARGET = 22_050
+def choose_chord_file(d: Path)->Optional[Path]:
+    p1, p2 = d/"chord_audio.txt", d/"chord_midi.txt"
+    return p1 if p1.exists() else p2 if p2.exists() else None
 
-MEL_BINS = 64                         # 64 mel bins × (mean+std) = 128 dims
-N_FFT = 4096                          # ≈186 ms
-HOP = 512                             # ≈23 ms at 22 050 Hz
-MIN_FRAMES = 4                        # require at least 4 frames
-MIN_SAMPLES = N_FFT + HOP * (MIN_FRAMES - 1)
-
-# -----------------------------------
-
-WAV_DIR.mkdir(exist_ok=True)
-
-
-def midi_to_wav(midi_path: Path, wav_path: Path) -> bool:
-    """
-    Render a MIDI file to mono 22 050 Hz WAV.
-    Returns True on success, False if rendering failed.
-    """
-    try:
-        midi = pm.PrettyMIDI(str(midi_path))
-        if not SF2_PATH.exists():
-            raise FileNotFoundError(f"SoundFont not found: {SF2_PATH}")
-
-        audio = midi.fluidsynth(fs=SR_ORIG, sf2_path=str(SF2_PATH))  # stereo float32 [-1,1]
-    except Exception as exc:
-        print(f"[WARN]   Could not render '{midi_path.name}': {exc}")
-        return False
-
-    if audio.ndim > 1:
-        audio = audio.mean(axis=1)  # convert to mono
-
-    # down-sample
-    audio = librosa.resample(audio, orig_sr=SR_ORIG, target_sr=SR_TARGET)
-    audio = np.clip(audio, -1.0, 1.0)  # avoid potential clipping
-    sf.write(wav_path, audio, SR_TARGET, subtype="FLOAT")
-    return True
-
-
-def choose_chord_file(song_dir: Path) -> Optional[Path]:
-    """Return the preferred annotation file, or None if neither exists."""
-    audio_ann = song_dir / "chord_audio.txt"
-    midi_ann = song_dir / "chord_midi.txt"
-    if audio_ann.exists():
-        return audio_ann
-    if midi_ann.exists():
-        return midi_ann
-    return None
-
-
-def extract_fixed_mel_segment(
-    y: np.ndarray,
-    start_s: float,
-    end_s: float,
-    sr: int,
-    mbins: int = MEL_BINS,
-) -> np.ndarray:
-    """
-    Return a 2 x n_mels embedding (mean + std) for the specified segment.
-    Pads with zeros until ≥ MIN_FRAMES STFT frames are available.
-    """
-    start = int(start_s * sr)
-    end = int(end_s * sr)
-    seg = y[start:end]
-
-    # pad if the segment is shorter than required
-    if len(seg) < MIN_SAMPLES:
-        seg = np.pad(seg, (0, MIN_SAMPLES - len(seg)))
-
+def segment_feature(audio: np.ndarray, ss: float, es: float)->Tuple[bool,np.ndarray]:
+    s, e = int(ss*SR), int(es*SR)
+    if e<=s: e=s+HOP
+    seg = audio[s:e]
+    if len(seg)<MIN_SAMPLES:
+        seg = np.pad(seg,(0,MIN_SAMPLES-len(seg)))
     mel = librosa.feature.melspectrogram(
         y=seg,
-        sr=sr,
+        sr=SR,
         n_fft=N_FFT,
         hop_length=HOP,
-        n_mels=mbins,
+        n_mels=MEL_BINS,
         fmax=8_000,
     )
-    log_mel = librosa.power_to_db(mel, ref=np.max)
+    lg  = librosa.power_to_db(mel, ref=np.max)
+    vec = np.concatenate([lg.mean(1), lg.std(1)]).astype(np.float32)
+    return np.isfinite(vec).all() and vec.any(), vec
 
-    mu = log_mel.mean(axis=1)
-    sigma = log_mel.std(axis=1)
-    return np.concatenate([mu, sigma]).astype(np.float32)  # (2 * mbins,)
+def main():
+    # reset wav_feature_idx
+    df = pd.read_csv(META_CSV)
+    df["wav_feature_idx"] = -1
+    df = df.reset_index(drop=True)
 
+    feat_dim = MEL_BINS*2
+    h5f = h5py.File(H5_OUT,"w")
+    dset = h5f.create_dataset("mel128",(len(df),feat_dim),"float32",
+                              chunks=(1024,feat_dim),compression="gzip")
 
-def main() -> None:
-    # 1. load metadata and reset index for contiguous rows
-    df = pd.read_csv(METADATA_CSV).reset_index(drop=True)
-    total_segments = len(df)
-    feat_dim = 2 * MEL_BINS
+    written = miss_wav = miss_ann = bad_feat = 0
+    for sid, grp in tqdm(df.groupby("song_id"),desc="Songs"):
+        sid_str = str(sid).zfill(3)
+        wav = WAV_DIR/f"{sid_str}.wav"
+        if not wav.exists():
+            miss_wav += len(grp); continue
+        audio, sr_read = sf.read(wav,dtype="float32")
+        if sr_read!=SR: miss_wav += len(grp); continue
+        if audio.ndim>1: audio=audio.mean(1)
+        if choose_chord_file(POP909_ROOT/sid_str) is None:
+            miss_ann += len(grp); continue
+        for idx in grp.index:
+            ok, vec = segment_feature(audio, df.at[idx,"start_s"], df.at[idx,"end_s"])
+            if not ok: bad_feat +=1; continue
+            dset[written]=vec
+            df.at[idx,"wav_feature_idx"]=written
+            written+=1
 
-    # 2. prepare HDF5 dataset
-    with h5py.File(H5_OUT, "w") as h5f:
-        dset = h5f.create_dataset(
-            "mel128",
-            shape=(total_segments, feat_dim),
-            dtype="float32",
-            chunks=(1024, feat_dim),
-            compression="gzip",
-        )
+    dset.resize((written,feat_dim)); h5f.close()
 
-        # 3. iterate through songs
-        grouped = df.groupby("song_id")
-        for song_id, group in tqdm(grouped, desc="Songs"):
-            song_id_str = str(song_id).zfill(3)
-            song_dir = POP909_ROOT / song_id_str
-            midi_path = song_dir / f"{song_id_str}.mid"
-            wav_path = WAV_DIR / f"{song_id_str}.wav"
+    df = df[df.wav_feature_idx>=0].reset_index(drop=True)
+    df["wav_feature_idx"]=np.arange(len(df),dtype=int)
+    assert len(df)==written, "metadata and HDF5 size mismatch!"
+    df.to_csv(META_CSV,index=False)
 
-            if not wav_path.exists():
-                if not midi_to_wav(midi_path, wav_path):
-                    # skip this song if rendering failed
-                    continue
-
-            # load WAV once per song
-            y, _ = sf.read(wav_path, dtype="float32")
-            if y.ndim > 1:
-                y = y.mean(axis=1)
-
-            # (optional) verify annotation file exists
-            chord_file = choose_chord_file(song_dir)
-            if chord_file is None:
-                print(f"[WARN]   No chord annotation found for {song_id_str}")
-                continue
-
-            # 4. process each metadata row
-            for idx in group.index:
-                start_s = df.at[idx, "start_s"]
-                end_s = df.at[idx, "end_s"]
-                feat = extract_fixed_mel_segment(y, start_s, end_s, sr=SR_TARGET)
-                dset[idx] = feat
-                df.at[idx, "wav_feature_idx"] = idx  # index == row id
-
-    # 5. save updated CSV
-    if "wav_feature_idx" not in df.columns:
-        df["wav_feature_idx"] = -1
-    df.to_csv(METADATA_CSV, index=False)
-
-    print(
-        f"Done. Saved {total_segments} embeddings "
-        f"({feat_dim} dims each) to '{H5_OUT}'."
-    )
-
+    print("\n=== SUMMARY ===")
+    print(f"written rows      : {written}")
+    print(f"missing WAV rows  : {miss_wav}")
+    print(f"missing annot rows: {miss_ann}")
+    print(f"bad feature rows  : {bad_feat}")
+    print(f"HDF5 shape        : {written} × {feat_dim}")
+    print("✓ all indices consistent, extraction complete.")
 
 if __name__ == "__main__":
     main()
