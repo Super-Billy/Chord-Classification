@@ -1,0 +1,2 @@
+/home/bw584/Chord-Classification/RNN/rnn_train.py:96: UserWarning: Rare classes (<2) — random split used.
+  warnings.warn("Rare classes (<2) — random split used.")
