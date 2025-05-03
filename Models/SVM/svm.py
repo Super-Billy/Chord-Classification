@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 SVM chord classifier using original POP909 features.
 - Inputs: mel128 log-mel spectrograms from features_audio.h5
@@ -6,6 +8,7 @@ SVM chord classifier using original POP909 features.
 - Outputs accuracy, weighted F1, classification report, and confusion matrix
 """
 
+import argparse
 import numpy as np
 import pandas as pd
 import h5py
@@ -21,9 +24,17 @@ META_CSV = "POP909_metadata.csv"
 H5_FILE  = "features_audio.h5"
 DS_NAME  = "mel128"
 TEST_SIZE = 0.1
-N_SUB = None  # Set to integer to subsample, or None for full dataset
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--subsample", type=int, default=None, help="Number of samples to use (None = full)")
+    parser.add_argument("--C", type=float, default=1.0, help="SVM regularization parameter")
+    parser.add_argument("--gamma", type=str, default="scale", help="Kernel coefficient (scale, auto, or float)")
+    return parser.parse_args()
 
 def main():
+    args = parse_args()
+
     # 1. Load metadata
     df = pd.read_csv(META_CSV)
     df["wav_feature_idx"] = df["wav_feature_idx"].astype(int)
@@ -31,9 +42,9 @@ def main():
     print(f"✅ Total usable samples: {len(df)}")
 
     # 2. Optional: Subsample data
-    if N_SUB is not None and N_SUB < len(df):
-        df = df.sample(n=N_SUB, random_state=42).reset_index(drop=True)
-        print(f"🔍 Using a random subset of {N_SUB} samples.")
+    if args.subsample is not None and args.subsample < len(df):
+        df = df.sample(n=args.subsample, random_state=42).reset_index(drop=True)
+        print(f"🔍 Using a random subset of {args.subsample} samples.")
     else:
         print(f"🔍 Using all {len(df)} samples.")
 
@@ -63,8 +74,8 @@ def main():
         ("scaler", StandardScaler()),
         ("clf", SVC(
             kernel="rbf",
-            C=1.0,
-            gamma="scale",
+            C=args.C,
+            gamma=args.gamma,
             decision_function_shape="ovr",
             verbose=False
         ))
