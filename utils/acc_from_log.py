@@ -13,6 +13,7 @@ substring will be processed. To process all .log files, pass an empty string:
 """
 
 import os
+from glob import glob
 import re
 import sys
 
@@ -60,3 +61,69 @@ def find_max_val_acc(root_dir, name_filter):
         print(f"Epoch 10: max val_acc = {best20:.3f}, file = {file20}")
     else:
         print("No epoch 10 entries found.")
+
+
+
+def extract_metrics_from_logs(log_dir):
+    """
+    For each .log file in log_dir, parse the filename for hyperparameters
+    and read the file to extract val_acc, f1_macro, and f1_weighted at Epoch 15.
+    Prints only non-None hyperparameters and the metrics (no filename line).
+    """
+    # mapping from abbreviation to full parameter name
+    abbr_map = [
+        ("lr", "learning_rate"),
+        ("ch", "base_channel"),
+        ("do", "dropout"),
+        ("bs", "batch_size"),
+        ("hid", "hidden_layer_size"),
+        ("h",  "hidden_layer_size"),
+        ("d",  "d_model"),
+        ("L",  "layer_number"),
+    ]
+
+    # find all .log files
+    for filepath in glob(os.path.join(log_dir, "*.log")):
+        filename = os.path.basename(filepath)
+        name_part = filename[:-4]  # strip ".log"
+
+        # parse hyperparameters from filename
+        hypers = {}
+        for token in name_part.split("_"):
+            for abbr, full in abbr_map:
+                if token.startswith(abbr):
+                    value = token[len(abbr):]
+                    hypers[full] = value
+                    break
+
+        # ensure all keys exist
+        for _, full in abbr_map:
+            hypers.setdefault(full, None)
+
+        # read file and search for Epoch 15 line
+        val_acc = f1_macro = f1_weighted = "N/A"
+        with open(filepath, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("Epoch 15"):
+                    m = re.search(
+                        r"val_acc=(?P<val_acc>\S+)\s+f1_macro=(?P<f1_macro>\S+)\s+f1_weighted=(?P<f1_weighted>\S+)",
+                        line
+                    )
+                    if m:
+                        val_acc = m.group("val_acc")
+                        f1_macro = m.group("f1_macro")
+                        f1_weighted = m.group("f1_weighted")
+                    break
+
+        # print only non-None hyperparameters
+        for param, val in hypers.items():
+            if val is not None:
+                print(f"{param}: {val}")
+        # print metrics
+        print(f"val_acc: {val_acc}, f1_macro: {f1_macro}, f1_weighted: {f1_weighted}")
+        print("-" * 50)
+
+
+
+
+
