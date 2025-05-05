@@ -25,17 +25,17 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-# ────────── Global paths (relative to the RNN/ folder) ──────────
-BASE_DIR      = os.path.dirname(__file__)          # …/project/RNN
+# ────────── Global paths (relative to the Models/ folder) ──────────
+BASE_DIR      = os.path.dirname(__file__)          # …/project/Models
 ROOT_DIR      = os.path.abspath(os.path.join(BASE_DIR, ".."))
 
 
 RAW_AUDIO_DIR: str = os.path.join(ROOT_DIR)
 DEFAULT_META  = os.path.join(ROOT_DIR, "POP909_metadata.csv")
 
-ORIG_H5_PATH: str = os.path.join(BASE_DIR,"rnn.h5")
-FAST_H5_PATH: str = os.path.join(BASE_DIR,"rnn_fast.h5")
-RNN_META_PATH: str = os.path.join(BASE_DIR,"new.csv")
+ORIG_H5_PATH: str = os.path.join(BASE_DIR,"features_audio_rnn.h5")
+FAST_H5_PATH: str = os.path.join(BASE_DIR,"features_audio_rnn_fast.h5")
+RNN_META_PATH: str = os.path.join(BASE_DIR,"POP909_metadata_rnn.csv")
 
 # ────────── Audio / feature parameters ──────────
 SAMPLE_RATE: int = 22_050
