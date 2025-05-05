@@ -19,43 +19,70 @@
 | **`features.h5`** | file | (Created by `feature_extraction.py`) 384-dim chroma features. |
 | **`.gitignore` / `README.md`** | misc | House-keeping. |
 
-Note: You must download the **POP909** Dataset to run **feature_extraction.py**. You must dowload **all .wav files** to run **extract_audio_feature.py**
 
-### Link for all .wav file (18GB)
-https://yaleedu-my.sharepoint.com/:f:/g/personal/benlu_wang_yale_edu/EmZ_Fz6CddZLmRDYMvRGdl4Baz-KNIQ-k8tNfxQ_qxVMEw?e=UKuSN5
+### 📦 Dataset Requirement
 
-### Link for the POP909 Dataset (60MB)
-https://github.com/music-x-lab/POP909-Dataset/tree/master/POP909
+To **reproduce or run** our project, you **must manually download** the **POP909 dataset**, including **all `.wav` audio files**, and perform **local feature extraction**.
 
----
-
-## Metadata schema 
-
-| Column | Example | Meaning |
-|--------|---------|---------|
-| `song_id` | `001` | Three-digit POP909 index |
-| `segment_id` | `042` | Index within song |
-| `start_s` / `end_s` | `12.345` | Segment boundaries in seconds |
-| `label` | `C:min7` | Original chord symbol (`N` = no-chord) |
-| `feature_idx` | `12345` | Row in **`features.h5/chroma384`** *(symbolic pipeline)* |
-| `wav_feature_idx` | `12345` | Row in **`features_audio.h5/mel128`** *(audio pipeline)* |
+🧪 If you have any problems on running our code, please contact benlu.wang@yale.edu for help!
 
 ---
 
-## Example – load embeddings in PyTorch
+### 🔗 Download Links
 
-```python
-import h5py, pandas as pd, torch
+* **All `.wav` audio files (\~18GB)**
+  [Download Link](https://yaleedu-my.sharepoint.com/:f:/g/personal/benlu_wang_yale_edu/EvW9mAXUU9xBqiFLTcPD3V4BhRAx5YaLsrze7NgBBlYpkA?e=rBCbyn)
 
-meta = pd.read_csv("POP909_metadata.csv")
-h5   = h5py.File("features_audio.h5", "r")     # or features.h5
-X    = h5["mel128"]                            # memory-mapped dataset
+* **POP909 metadata (\~60MB)**
+  [POP909 GitHub Repository](https://github.com/music-x-lab/POP909-Dataset/tree/master/POP909)
 
-# get first 1024 training samples
-sel   = meta.query("split == 'train'").head(1024)
-feats = torch.tensor(X[sel["wav_feature_idx"]])   # (1024, 128)
-labels = sel["label"].values
-```
+---
+
+### ⚙️ Setup & Feature Extraction (⏱ \~20 hours due to dataset size)
+
+1. **Install Dependencies**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Extract Global Embedding Features (`mel128`) for Simple Models**
+
+   ```bash
+   python build_metadata.py
+   python extract_audio_feature.py
+   ```
+
+3. **Extract Frame-Level Log-Mel Features (`logmel`) for Complex Models**
+
+   ```bash
+   cd Models
+   python feature_extraction.py
+   ```
+
+---
+
+### 🧪 Run Model Training (Example: CNN)
+
+1. Navigate to the CNN folder:
+
+   ```bash
+   cd Models/CNN
+   ```
+
+2. Make the script executable and run it:
+
+   ```bash
+   chmod +x hyper_search_cnn.sh
+   ./hyper_search_cnn.sh
+   ```
+
+3. Logs and results will be saved in:
+
+   ```
+   Models/CNN/logs/
+   ```
+
 
 ---
 
