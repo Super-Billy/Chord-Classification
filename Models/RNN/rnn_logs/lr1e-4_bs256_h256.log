@@ -1,0 +1,17 @@
+/home/bw584/Chord-Classification/Models/RNN/rnn_train.py:125: UserWarning: Rare classes (<2 samples) – random split used.
+  warnings.warn("Rare classes (<2 samples) – random split used.")
+Epoch 01  val_acc=0.740 f1_macro=0.125  f1_weighted=0.670
+Epoch 02  val_acc=0.770 f1_macro=0.230  f1_weighted=0.726
+Epoch 03  val_acc=0.792 f1_macro=0.298  f1_weighted=0.759
+Epoch 04  val_acc=0.802 f1_macro=0.351  f1_weighted=0.777
+Epoch 05  val_acc=0.807 f1_macro=0.369  f1_weighted=0.785
+Epoch 06  val_acc=0.815 f1_macro=0.402  f1_weighted=0.796
+Epoch 07  val_acc=0.818 f1_macro=0.409  f1_weighted=0.796
+Epoch 08  val_acc=0.825 f1_macro=0.443  f1_weighted=0.806
+Epoch 09  val_acc=0.828 f1_macro=0.448  f1_weighted=0.811
+Epoch 10  val_acc=0.831 f1_macro=0.472  f1_weighted=0.815
+Epoch 11  val_acc=0.832 f1_macro=0.471  f1_weighted=0.818
+Epoch 12  val_acc=0.834 f1_macro=0.475  f1_weighted=0.818
+Epoch 13  val_acc=0.836 f1_macro=0.483  f1_weighted=0.822
+Epoch 14  val_acc=0.837 f1_macro=0.487  f1_weighted=0.822
+Epoch 15  val_acc=0.836 f1_macro=0.486  f1_weighted=0.821

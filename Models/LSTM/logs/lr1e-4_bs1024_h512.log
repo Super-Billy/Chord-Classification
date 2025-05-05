@@ -1,0 +1,17 @@
+/home/bw584/Chord-Classification/Models/LSTM/lstm_train.py:97: UserWarning: Rare classes (<2) — random split used.
+  warnings.warn("Rare classes (<2) — random split used.")
+Epoch 01  val_acc=0.749  f1_macro=0.141  f1_weighted=0.688
+Epoch 02  val_acc=0.786  f1_macro=0.258  f1_weighted=0.752
+Epoch 03  val_acc=0.803  f1_macro=0.315  f1_weighted=0.773
+Epoch 04  val_acc=0.816  f1_macro=0.372  f1_weighted=0.793
+Epoch 05  val_acc=0.825  f1_macro=0.408  f1_weighted=0.806
+Epoch 06  val_acc=0.835  f1_macro=0.448  f1_weighted=0.816
+Epoch 07  val_acc=0.838  f1_macro=0.465  f1_weighted=0.820
+Epoch 08  val_acc=0.846  f1_macro=0.496  f1_weighted=0.833
+Epoch 09  val_acc=0.853  f1_macro=0.507  f1_weighted=0.840
+Epoch 10  val_acc=0.853  f1_macro=0.512  f1_weighted=0.839
+Epoch 11  val_acc=0.859  f1_macro=0.540  f1_weighted=0.848
+Epoch 12  val_acc=0.862  f1_macro=0.549  f1_weighted=0.851
+Epoch 13  val_acc=0.863  f1_macro=0.555  f1_weighted=0.852
+Epoch 14  val_acc=0.864  f1_macro=0.557  f1_weighted=0.853
+Epoch 15  val_acc=0.863  f1_macro=0.556  f1_weighted=0.852

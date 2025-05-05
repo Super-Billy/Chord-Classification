@@ -1,0 +1,15 @@
+Epoch 01  val_acc=0.765 f1_macro=0.176  f1_weighted=0.714
+Epoch 02  val_acc=0.769 f1_macro=0.251  f1_weighted=0.739
+Epoch 03  val_acc=0.802 f1_macro=0.347  f1_weighted=0.779
+Epoch 04  val_acc=0.816 f1_macro=0.386  f1_weighted=0.799
+Epoch 05  val_acc=0.829 f1_macro=0.453  f1_weighted=0.815
+Epoch 06  val_acc=0.846 f1_macro=0.494  f1_weighted=0.836
+Epoch 07  val_acc=0.858 f1_macro=0.527  f1_weighted=0.848
+Epoch 08  val_acc=0.870 f1_macro=0.572  f1_weighted=0.863
+Epoch 09  val_acc=0.871 f1_macro=0.587  f1_weighted=0.864
+Epoch 10  val_acc=0.879 f1_macro=0.607  f1_weighted=0.873
+Epoch 11  val_acc=0.884 f1_macro=0.627  f1_weighted=0.879
+Epoch 12  val_acc=0.889 f1_macro=0.632  f1_weighted=0.885
+Epoch 13  val_acc=0.890 f1_macro=0.638  f1_weighted=0.885
+Epoch 14  val_acc=0.892 f1_macro=0.638  f1_weighted=0.887
+Epoch 15  val_acc=0.894 f1_macro=0.644  f1_weighted=0.889

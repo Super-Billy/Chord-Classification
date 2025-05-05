@@ -1,0 +1,19 @@
+/home/bw584/Chord-Classification/Models/CNN/cnn_train.py:163: UserWarning: Rare classes (<2 samples) – random split applied.
+  warnings.warn("Rare classes (<2 samples) – random split applied.")
+/home/bw584/Chord-Classification/Models/CNN/cnn_train.py:208: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = torch.cuda.amp.GradScaler(enabled=device.type == "cuda")
+Epoch 01  val_acc=0.365 f1_macro=0.036  f1_weighted=0.322
+Epoch 02  val_acc=0.457 f1_macro=0.051  f1_weighted=0.426
+Epoch 03  val_acc=0.637 f1_macro=0.067  f1_weighted=0.559
+Epoch 04  val_acc=0.600 f1_macro=0.060  f1_weighted=0.506
+Epoch 05  val_acc=0.721 f1_macro=0.075  f1_weighted=0.625
+Epoch 06  val_acc=0.657 f1_macro=0.071  f1_weighted=0.578
+Epoch 07  val_acc=0.680 f1_macro=0.077  f1_weighted=0.599
+Epoch 08  val_acc=0.718 f1_macro=0.086  f1_weighted=0.633
+Epoch 09  val_acc=0.734 f1_macro=0.099  f1_weighted=0.652
+Epoch 10  val_acc=0.728 f1_macro=0.105  f1_weighted=0.653
+Epoch 11  val_acc=0.745 f1_macro=0.112  f1_weighted=0.669
+Epoch 12  val_acc=0.747 f1_macro=0.115  f1_weighted=0.671
+Epoch 13  val_acc=0.754 f1_macro=0.122  f1_weighted=0.679
+Epoch 14  val_acc=0.753 f1_macro=0.120  f1_weighted=0.680
+Epoch 15  val_acc=0.755 f1_macro=0.121  f1_weighted=0.681
