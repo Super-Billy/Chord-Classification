@@ -24,6 +24,8 @@
 
 To **reproduce or run** our project, you **must manually download** the **POP909 dataset**, including **all `.wav` audio files**, and perform **local feature extraction**.
 
+🧪 If you have any problems on running our code, please contact benlu.wang@yale.edu for help!
+
 ---
 
 ### 🔗 Download Links
