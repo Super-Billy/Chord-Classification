@@ -1,0 +1,7 @@
+C=0.1, gamma=scale, subsample=2000, acc=0.2450, macro_f1=0.0565
+C=0.1, gamma=auto, subsample=2000, acc=0.2450, macro_f1=0.0565
+C=1.0, gamma=scale, subsample=2000, acc=0.5700, macro_f1=0.2410
+C=1.0, gamma=auto, subsample=2000, acc=0.5700, macro_f1=0.2410
+C=10.0, gamma=scale, subsample=2000, acc=0.5850, macro_f1=0.2679
+C=10.0, gamma=auto, subsample=2000, acc=0.5850, macro_f1=0.2679
+C=10.0, gamma=scale, subsample=None, acc=0.8874, macro_f1=0.6632

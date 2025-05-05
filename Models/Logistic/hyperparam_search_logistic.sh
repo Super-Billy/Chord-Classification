@@ -1,5 +1,4 @@
 set -euo pipefail
-
 mkdir -p logs
 
 # -------- Sweep Space --------

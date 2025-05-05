@@ -14,7 +14,7 @@ for c in "${CS[@]}"; do
     for n in "${SUBSAMPLES[@]}"; do
       run="svm_c${c}_g${g}_n${n}"
       echo -e "\n===== Running ${run} ====="
-      python svm_gpu.py \
+      python svm.py \
         --C "$c" \
         --gamma "$g" \
         --subsample "$n" \
