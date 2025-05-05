@@ -1,12 +1,8 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 PyTorch MLP chord classifier using mel128 features from POP909.
-- Supports GPU (e.g. RTX 6000 Ada)
-- CLI arguments: --lr, --batch-size, --epochs, --hidden
+Fixed hyperparameters for best performance config.
 """
 
-import argparse
 import numpy as np
 import pandas as pd
 import h5py
@@ -17,16 +13,6 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 import warnings
-
-# -------- CLI arguments --------
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--epochs", type=int, default=20)
-    parser.add_argument("--hidden", type=str, default="256,128")  # comma-separated
-    parser.add_argument("--device", type=str, default="cuda")
-    return parser.parse_args()
 
 # -------- MLP Model --------
 class MLP(nn.Module):
@@ -46,17 +32,24 @@ class MLP(nn.Module):
 
 # -------- Main --------
 def main():
-    args = parse_args()
-    hidden_sizes = list(map(int, args.hidden.split(",")))
-    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    print(f"✅ Using {device} | hidden={hidden_sizes} | lr={args.lr} | batch_size={args.batch_size} | epochs={args.epochs}")
+    # ✅ Fixed best config (🥇 1)
+    lr = 0.0005
+    batch_size = 128
+    epochs = 30
+    hidden_sizes = [512, 256]
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    print(f"✅ Using {device} | hidden={hidden_sizes} | lr={lr} | batch_size={batch_size} | epochs={epochs}")
+
+    META_CSV = "/home/yaxin/My_Files/ml_final/Chord-Classification/POP909_metadata.csv"
+    H5_FILE = "/home/yaxin/My_Files/ml_final/Chord-Classification/features_audio.h5"
 
     # Load metadata and features
-    df = pd.read_csv("POP909_metadata.csv")
+    df = pd.read_csv(META_CSV)
     df = df[df["wav_feature_idx"] >= 0].copy()
     print(f"✅ Usable samples: {len(df)}")
 
-    with h5py.File("features_audio.h5", "r") as h5:
+    with h5py.File(H5_FILE, "r") as h5:
         X_all = h5["mel128"][:]
     X = X_all[df["wav_feature_idx"].astype(int)]
     y = LabelEncoder().fit_transform(df["label"])
@@ -83,16 +76,16 @@ def main():
 
     # Model setup
     model = MLP(X_train_tensor.shape[1], hidden_sizes, len(np.unique(y))).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
 
     # Train loop
     model.train()
-    for epoch in range(args.epochs):
+    for epoch in range(epochs):
         permutation = torch.randperm(X_train_tensor.size(0))
         total_loss = 0
-        for i in range(0, X_train_tensor.size(0), args.batch_size):
-            idx = permutation[i:i + args.batch_size]
+        for i in range(0, X_train_tensor.size(0), batch_size):
+            idx = permutation[i:i + batch_size]
             xb, yb = X_train_tensor[idx], y_train_tensor[idx]
             optimizer.zero_grad()
             out = model(xb)
@@ -100,7 +93,7 @@ def main():
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
-        print(f"Epoch {epoch+1:2d}/{args.epochs} | Loss: {total_loss:.4f}")
+        print(f"Epoch {epoch+1:02d}/{epochs} | Loss: {total_loss:.4f}")
 
     # Evaluation
     model.eval()
@@ -108,12 +101,17 @@ def main():
         y_pred = torch.argmax(model(X_test_tensor), dim=1).cpu().numpy()
         y_true = y_test_tensor.cpu().numpy()
         acc = accuracy_score(y_true, y_pred)
-        f1 = f1_score(y_true, y_pred, average="weighted")
-        print(f"\n✅ Accuracy: {acc:.3f} | Weighted F1: {f1:.3f}\n")
+        f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
+
+        print(f"\n✅ Accuracy: {acc:.4f} | Macro F1-score: {f1:.4f}\n")
         print("Classification Report:")
         print(classification_report(y_true, y_pred, zero_division=0))
         print("Confusion Matrix:")
         print(confusion_matrix(y_true, y_pred))
+
+        # Save result
+        with open("results_summary.txt", "a") as f:
+            f.write(f"BEST CONFIG | lr={lr}, batch_size={batch_size}, epochs={epochs}, hidden={hidden_sizes}, acc={acc:.4f}, macro_f1={f1:.4f}\n")
 
 if __name__ == "__main__":
     main()
