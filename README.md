@@ -29,7 +29,7 @@ To **reproduce or run** our project, you **must manually download** the **POP909
 ### 🔗 Download Links
 
 * **All `.wav` audio files (\~18GB)**
-  [Download Link]([https://yaleedu-my.sharepoint.com/:f:/g/personal/benlu_wang_yale_edu/EvW9mAXUU9xBqiFLTcPD3V4B9-qf9p5o---_ccdY8UkrPg?e=bIe80c](https://yaleedu-my.sharepoint.com/:f:/g/personal/benlu_wang_yale_edu/EvW9mAXUU9xBqiFLTcPD3V4BhRAx5YaLsrze7NgBBlYpkA?e=rBCbyn))
+  [Download Link](https://yaleedu-my.sharepoint.com/:f:/g/personal/benlu_wang_yale_edu/EvW9mAXUU9xBqiFLTcPD3V4BhRAx5YaLsrze7NgBBlYpkA?e=rBCbyn)
 
 * **POP909 metadata (\~60MB)**
   [POP909 GitHub Repository](https://github.com/music-x-lab/POP909-Dataset/tree/master/POP909)
